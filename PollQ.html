@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Polling Place Bottleneck Simulation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h2 { margin-bottom: 5px; }
+        p { color: #aaaaaa; margin-bottom: 20px; }
+        
+        #simCanvas {
+            background-color: #1e1e1e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            width: 800px;
+            box-sizing: border-box;
+            border: 1px solid #333;
+            align-items: flex-end;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 10px;
+        }
+        .timer-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        label { font-weight: bold; font-size: 14px; color: #cccccc; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        select {
+            padding: 8px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button {
+            padding: 8px 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex: 1;
+        }
+        button:hover { background-color: #2980b9; }
+        button.stop-btn { background-color: #e74c3c; }
+        button.stop-btn:hover { background-color: #c0392b; }
+        button.clear-btn { background-color: #7f8c8d; }
+        button.clear-btn:hover { background-color: #95a5a6; }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-top: 20px;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            border: 1px solid #333;
+        }
+        .stat-box { text-align: center; flex: 1; }
+        .stat-title { font-size: 12px; color: #aaaaaa; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 28px; font-weight: bold; margin-top: 8px; color: #4CAF50; }
+    </style>
+</head>
+<body>
+
+    <h2>Election Day Process Flow</h2>
+    <p>Compare Coupled vs. Decoupled Routing</p>
+
+    <canvas id="simCanvas" width="800" height="500"></canvas>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="modeSelect">Workflow Mode:</label>
+            <select id="modeSelect">
+                <option value="coupled">Original (Coupled / Blocked PPW)</option>
+                <option value="decoupled">Proposed (Decoupled / Voter Holds Token)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="arrivalRate">Arrival Rate (Voters/Hr): <span id="rateVal">40 (Medium)</span></label>
+            <input type="range" id="arrivalRate" min="10" max="150" value="40">
+        </div>
+        <div class="control-group">
+            <label for="paperRatio">Paper Routing Ratio (BOD %): <span id="ratioVal">30%</span></label>
+            <input type="range" id="paperRatio" min="0" max="100" value="30">
+        </div>
+        <div class="control-group">
+            <label>Chronometer:</label>
+            <div class="timer-buttons">
+                <button id="startTimerBtn">Start</button>
+                <button id="stopTimerBtn" class="stop-btn">Stop</button>
+                <button id="clearTimerBtn" class="clear-btn">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-box">
+            <div class="stat-title">Entrance Queue</div>
+            <div class="stat-value" id="statEntrance">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-title">EBM Line (7 Stations)</div>
+            <div class="stat-value" id="statEBM">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-title">BOD Line (1 Printer)</div>
+            <div class="stat-value" id="statBOD">0</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const modeSelect = document.getElementById('modeSelect');
+        const arrivalRateSlider = document.getElementById('arrivalRate');
+        const paperRatioSlider = document.getElementById('paperRatio');
+        
+        // Timer Controls
+        const startTimerBtn = document.getElementById('startTimerBtn');
+        const stopTimerBtn = document.getElementById('stopTimerBtn');
+        const clearTimerBtn = document.getElementById('clearTimerBtn');
+        
+        let isDecoupled = false;
+        let simulatedSeconds = 0; 
+        let isTimerRunning = false; 
+        
+        startTimerBtn.addEventListener('click', () => isTimerRunning = true);
+        stopTimerBtn.addEventListener('click', () => isTimerRunning = false);
+        clearTimerBtn.addEventListener('click', () => {
+            simulatedSeconds = 0;
+        });
+
+        modeSelect.addEventListener('change', (e) => {
+            isDecoupled = e.target.value === 'decoupled';
+            if (isDecoupled) {
+                ppwStations.forEach(p => {
+                    if (p.blockedBy) {
+                        p.blockedBy.state = 'BOD_Q';
+                        bodQueue.push(p.blockedBy);
+                        p.blockedBy = null;
+                    }
+                });
+            }
+        });
+        
+        // Timing (1 min = 60 frames, so 1 frame = 1 second)
+        const checkInTime = 60; // 1 min
+        const bodTime = 240; // 4 min
+        const ebmTimeMin = 300; // 5 min
+        const ebmTimeMax = 1200; // 20 min
+        
+        let entranceQueue = [];
+        let ebmQueue = [];
+        let bodQueue = [];
+        let activeVoters = [];
+
+        const ppwStations = [
+            { id: 0, x: 200, y: 150, activeVoter: null, blockedBy: null, color: '#3498db' },
+            { id: 1, x: 200, y: 350, activeVoter: null, blockedBy: null, color: '#3498db' }
+        ];
+        
+        const ebmStations = [];
+        for(let i=0; i<7; i++) ebmStations.push({ id: i, x: 600, y: 50 + i*50, activeVoter: null, color: '#9b59b6' });
+        
+        const bodStation = { x: 600, y: 440, activeVoter: null, color: '#e67e22' };
+
+        function updateUI() {
+            document.getElementById('statEntrance').innerText = entranceQueue.length;
+            document.getElementById('statEBM').innerText = ebmQueue.length;
+            document.getElementById('statBOD').innerText = bodQueue.length;
+            
+            const rate = parseInt(arrivalRateSlider.value);
+            let speedText = rate < 35 ? "Low" : rate > 75 ? "Surge" : "Medium";
+            document.getElementById('rateVal').innerText = `${rate} (${speedText})`;
+            document.getElementById('ratioVal').innerText = paperRatioSlider.value + "%";
+        }
+
+        function drawRect(x, y, w, h, color, text) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x - w/2, y - h/2, w, h);
+            ctx.fillStyle = "#fff";
+            ctx.font = "12px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(text, x, y + 4);
+        }
+
+        function drawCircle(x, y, radius, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawChronometer() {
+            // Simply calculate the minutes and discard the remainder
+            let m = Math.floor(simulatedSeconds / 60);
+            let timeStr = `Simulated Minutes: ${m}`;
+            
+            ctx.fillStyle = "#f1c40f"; 
+            ctx.font = "bold 16px sans-serif";
+            ctx.textAlign = "left";
+            ctx.fillText(timeStr, 20, 30);
+            
+            ctx.fillStyle = isTimerRunning ? "#2ecc71" : "#e74c3c";
+            ctx.font = "bold 12px sans-serif";
+            ctx.fillText(isTimerRunning ? "(Running)" : "(Paused)", 20, 50);
+        }
+
+        function spawnVoter() {
+            const spawnChance = arrivalRateSlider.value / 3600;
+            if (Math.random() < spawnChance) {
+                let isPaper = (Math.random() * 100) < paperRatioSlider.value;
+                let voter = {
+                    id: Math.random(),
+                    x: 20, y: 250,
+                    targetX: 20, targetY: 250,
+                    state: 'ENTRANCE',
+                    type: isPaper ? 'BOD' : 'EBM',
+                    timer: 0,
+                    personalTimeLimit: 0, 
+                    color: isPaper ? '#e74c3c' : '#2ecc71',
+                    assignedPPW: null
+                };
+                entranceQueue.push(voter);
+                activeVoters.push(voter);
+            }
+        }
+
+        function updateLogic() {
+            for (let ppw of ppwStations) {
+                if (!ppw.activeVoter && !ppw.blockedBy && entranceQueue.length > 0) {
+                    let v = entranceQueue.shift();
+                    v.state = 'CHECKIN';
+                    v.targetX = ppw.x - 30;
+                    v.targetY = ppw.y;
+                    v.assignedPPW = ppw;
+                    ppw.activeVoter = v;
+                }
+            }
+
+            for (let ppw of ppwStations) {
+                if (ppw.activeVoter) {
+                    let v = ppw.activeVoter;
+                    v.timer++;
+                    if (v.timer >= checkInTime) {
+                        v.timer = 0;
+                        if (v.type === 'EBM') {
+                            v.state = 'EBM_Q';
+                            ebmQueue.push(v);
+                            ppw.activeVoter = null;
+                        } else if (v.type === 'BOD') {
+                            if (isDecoupled) {
+                                v.state = 'BOD_Q';
+                                bodQueue.push(v);
+                                ppw.activeVoter = null; 
+                            } else {
+                                v.state = 'WAITING_BOD';
+                                bodQueue.push(v);
+                                ppw.blockedBy = v;
+                                ppw.activeVoter = null;
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (let ebm of ebmStations) {
+                if (!ebm.activeVoter && ebmQueue.length > 0) {
+                    let v = ebmQueue.shift();
+                    v.state = 'VOTING_EBM';
+                    v.targetX = ebm.x - 30;
+                    v.targetY = ebm.y;
+                    v.personalTimeLimit = Math.floor(Math.random() * (ebmTimeMax - ebmTimeMin + 1)) + ebmTimeMin;
+                    ebm.activeVoter = v;
+                }
+                if (ebm.activeVoter) {
+                    ebm.activeVoter.timer++;
+                    if (ebm.activeVoter.timer >= ebm.activeVoter.personalTimeLimit) {
+                        ebm.activeVoter.state = 'EXIT';
+                        ebm.activeVoter.targetX = 850; 
+                        ebm.activeVoter = null;
+                    }
+                }
+            }
+
+            if (!bodStation.activeVoter && bodQueue.length > 0) {
+                let v = bodQueue.shift();
+                v.state = 'VOTING_BOD';
+                v.targetX = bodStation.x - 30;
+                v.targetY = bodStation.y;
+                bodStation.activeVoter = v;
+            }
+            if (bodStation.activeVoter) {
+                bodStation.activeVoter.timer++;
+                if (bodStation.activeVoter.timer >= bodTime) {
+                    let finishedVoter = bodStation.activeVoter;
+                    finishedVoter.state = 'EXIT';
+                    finishedVoter.targetX = 850;
+                    
+                    if (finishedVoter.assignedPPW && finishedVoter.assignedPPW.blockedBy === finishedVoter) {
+                        finishedVoter.assignedPPW.blockedBy = null;
+                    }
+                    bodStation.activeVoter = null;
+                }
+            }
+
+            for (let i = activeVoters.length - 1; i >= 0; i--) {
+                let v = activeVoters[i];
+                
+                if (v.state === 'ENTRANCE') {
+                    let qIndex = entranceQueue.indexOf(v);
+                    v.targetX = 120 - (qIndex * 15);
+                    v.targetY = 250;
+                } else if (v.state === 'EBM_Q') {
+                    let qIndex = ebmQueue.indexOf(v);
+                    v.targetX = 450 - (qIndex * 15);
+                    v.targetY = 250;
+                } else if (v.state === 'BOD_Q' || v.state === 'WAITING_BOD') {
+                    let qIndex = bodQueue.indexOf(v);
+                    if (v.state === 'WAITING_BOD' && v.assignedPPW) {
+                        v.targetX = v.assignedPPW.x + 30;
+                        v.targetY = v.assignedPPW.y;
+                    } else {
+                        v.targetX = 450 - (qIndex * 15);
+                        v.targetY = 440;
+                    }
+                }
+
+                v.x += (v.targetX - v.x) * 0.1;
+                v.y += (v.targetY - v.y) * 0.1;
+
+                drawCircle(v.x, v.y, 6, v.color);
+
+                if (v.state === 'EXIT' && v.x > 820) {
+                    activeVoters.splice(i, 1);
+                }
+            }
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (isTimerRunning) {
+                simulatedSeconds++;
+            }
+            drawChronometer();
+
+            spawnVoter();
+
+            ppwStations.forEach(p => {
+                let color = p.blockedBy ? '#c0392b' : p.color; 
+                drawRect(p.x, p.y, 60, 40, color, p.blockedBy ? "BLOCKED" : "PPW");
+                
+                if (p.blockedBy) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x + 30, p.y);
+                    ctx.lineTo(bodStation.x - 30, bodStation.y);
+                    ctx.strokeStyle = "rgba(231, 76, 60, 0.5)";
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            });
+
+            ebmStations.forEach(e => drawRect(e.x, e.y, 50, 30, e.color, "EBM"));
+            drawRect(bodStation.x, bodStation.y, 70, 50, bodStation.color, "BOD");
+
+            ctx.fillStyle = "rgba(255,255,255,0.1)";
+            ctx.fillRect(350, 0, 2, 500);
+
+            updateLogic();
+            updateUI();
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+</html>
