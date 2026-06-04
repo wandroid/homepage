@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polling Place Bottleneck Simulation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 800px;
+            background-color: #1e1e1e;
+            padding: 40px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #ffffff;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-top: 0;
+            text-align: center;
+        }
+        h2 {
+            color: #4CAF50;
+            margin-top: 30px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #3498db;
+            margin-top: 25px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .cta-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+        .launch-btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 15px 40px;
+            border-radius: 8px;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .launch-btn:hover {
+            background-color: #2980b9;
+        }
+        .launch-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Polling Place Bottleneck Simulation</h1>
+        
+        <div class="cta-container">
+            <a href="PollQ.html" class="launch-btn">Launch Simulation</a>
+        </div>
+
+        <p>An interactive 2D simulation built with HTML5 Canvas and JavaScript to model, demonstrate, and solve process flow bottlenecks at voting locations.</p>
+        
+        <p>This model was specifically designed to visualize the stark contrast between early voting days and the Election Day rush, focusing on the flow dynamics between Electronic Ballot Markers (EBM) and Ballot On Demand (BOD) printers.</p>
+
+        <h2>🎯 Purpose of the Model</h2>
+        <p>During peak demand (such as the 5:00 PM to 7:45 PM rush), queues rapidly build if the arrival rate exceeds processing time at any specific node. This simulation addresses a specific process flow flaw involving the manual hand-off of the "Ballot Form" (a printed receipt carrying the voter's precinct and language choice).</p>
+        <p>The model demonstrates mathematically and visually why treating a serial process (1 BOD printer) the same as a parallel process (7 independent EBM machines) causes the entire check-in system to collapse, and proves how a simple routing change resolves it.</p>
+
+        <h2>⚙️ The Two Workflows</h2>
+        
+        <h3>1. Original Mode: The "Coupled" Flow (The Flaw)</h3>
+        <ul>
+            <li><strong>The Process:</strong> Poll Pad Workers (PPW) take the Ballot Form directly to the BOD station and wait for the ballot to print, blocking their own input queue.</li>
+            <li><strong>The Flaw:</strong> This creates a "synchronous block." By waiting for the high-latency BOD printer, the PPW is essentially neutralized, artificially capping the check-in speed. The line backs up out the front door, and stacked, anonymous receipts at the printer risk getting scrambled.</li>
+        </ul>
+
+        <h3>2. Proposed Mode: The "Decoupled" Flow (The Solution)</h3>
+        <ul>
+            <li><strong>The Process:</strong> The system is decoupled by shifting the physical token (the Ballot Form) from the worker to the voter. The voter takes their form and queues directly at the BOD station.</li>
+            <li><strong>The Result:</strong> The PPW desk instantly frees up to process the next person, maximizing check-in throughput. While a queue still forms at the BOD due to its serial nature, the wait becomes transparent to the voter, and the risk of scrambled, anonymous receipts is entirely eliminated.</li>
+        </ul>
+
+        <h2>📊 Features & Controls</h2>
+        <ul>
+            <li><strong>Workflow Mode Toggle:</strong> Switch between the "Coupled" (Original) and "Decoupled" (Proposed) routing methods in real-time.</li>
+            <li><strong>Arrival Rate Slider:</strong> Adjust the volume of voters from 10 to 150 per simulated hour to simulate sudden bursts of demand.</li>
+            <li><strong>Paper Routing Ratio (%):</strong> Adjust the percentage of voters routed to the BOD. This demonstrates the catastrophic bottleneck that occurs if poll workers attempt to "sell" the paper ballot to EBM-bound voters during a rush.</li>
+            <li><strong>Manual Chronometer:</strong> A Start/Stop/Clear timer displaying whole "Simulated Minutes" allows users to benchmark exactly how long it takes queues to clear under different conditions.</li>
+        </ul>
+
+        <h2>⏱️ Technical Timing Parameters</h2>
+        <p>The simulation runs on a scaled engine where 60 animation frames equal 1 simulated minute.</p>
+        <ul>
+            <li><strong>Check-in:</strong> 1 simulated minute</li>
+            <li><strong>BOD Print:</strong> 4 simulated minutes</li>
+            <li><strong>EBM Vote:</strong> Randomized between 5 to 20 simulated minutes per voter to account for real-world variance</li>
+        </ul>
+
+        <div class="cta-container">
+            <a href="PollQ.html" class="launch-btn">Launch Simulation</a>
+        </div>
+    </div>
+
+</body>
+</html>
