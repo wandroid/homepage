@@ -82,33 +82,33 @@
             <a href="PollQ.html" class="launch-btn">Launch Simulation</a>
         </div>
 
-        <p>An interactive 2D simulation built with HTML5 Canvas and JavaScript to model, demonstrate, and solve process flow bottlenecks at voting locations.</p>
+        <p>An interactive 2D simulation built with HTML5 Canvas and JavaScript to model, demonstrate, and optimize process flow at voting locations.</p>
         
         <p>This model was specifically designed to visualize the stark contrast between early voting days and the Election Day rush, focusing on the flow dynamics between Electronic Ballot Markers (EBM) and Ballot On Demand (BOD) printers.</p>
 
         <h2>🎯 Purpose of the Model</h2>
-        <p>During peak demand (such as the 5:00 PM to 7:45 PM rush), queues rapidly build if the arrival rate exceeds processing time at any specific node. This simulation addresses a specific process flow flaw involving the manual hand-off of the "Ballot Form" (a printed receipt carrying the voter's precinct and language choice).</p>
-        <p>The model demonstrates mathematically and visually why treating a serial process (1 BOD printer) the same as a parallel process (7 independent EBM machines) causes the entire check-in system to collapse, and proves how a simple routing change resolves it.</p>
+        <p>During peak demand (such as the 5:00 PM to 7:45 PM rush), queues rapidly build if the arrival rate exceeds the processing time at any specific node. This simulation explores a workflow challenge involving the manual hand-off of the "Ballot Form" (a printed receipt carrying the voter's precinct and language choice).</p>
+        <p>The model demonstrates mathematically and visually how tying a serial process (1 BOD printer) directly to the parallel check-in stations can inadvertently bottleneck the entire system during surges, and illustrates how a simple routing adjustment can keep lines moving smoothly.</p>
 
         <h2>⚙️ The Two Workflows</h2>
         
-        <h3>1. Original Mode: The "Coupled" Flow (The Flaw)</h3>
+        <h3>1. Original Mode: The "Coupled" Flow (Current Setup)</h3>
         <ul>
-            <li><strong>The Process:</strong> Poll Pad Workers (PPW) take the Ballot Form directly to the BOD station and wait for the ballot to print, blocking their own input queue.</li>
-            <li><strong>The Flaw:</strong> This creates a "synchronous block." By waiting for the high-latency BOD printer, the PPW is essentially neutralized, artificially capping the check-in speed. The line backs up out the front door, and stacked, anonymous receipts at the printer risk getting scrambled.</li>
+            <li><strong>The Process:</strong> Poll Pad Officers (PPO) take the Ballot Form directly to the BOD station and wait for the ballot to print, remaining occupied until the printer finishes.</li>
+            <li><strong>The Challenge:</strong> This creates an unintended "synchronous dependency." By waiting for the high-latency BOD printer, the PPO's check-in speed is temporarily capped to match the printer's output speed. During high volume, the entrance line backs up, and stacked, anonymous receipts at the printer can become difficult to manage if an issue like a paper jam occurs.</li>
         </ul>
 
-        <h3>2. Proposed Mode: The "Decoupled" Flow (The Solution)</h3>
+        <h3>2. Proposed Mode: The "Decoupled" Flow (The Optimization)</h3>
         <ul>
             <li><strong>The Process:</strong> The system is decoupled by shifting the physical token (the Ballot Form) from the worker to the voter. The voter takes their form and queues directly at the BOD station.</li>
-            <li><strong>The Result:</strong> The PPW desk instantly frees up to process the next person, maximizing check-in throughput. While a queue still forms at the BOD due to its serial nature, the wait becomes transparent to the voter, and the risk of scrambled, anonymous receipts is entirely eliminated.</li>
+            <li><strong>The Result:</strong> The PPO desk instantly frees up to process the next person, maximizing check-in throughput. While a queue still naturally forms at the BOD due to its serial nature, the wait becomes transparent to the voter, and the risk of managing anonymous receipts is entirely eliminated.</li>
         </ul>
 
         <h2>📊 Features & Controls</h2>
         <ul>
             <li><strong>Workflow Mode Toggle:</strong> Switch between the "Coupled" (Original) and "Decoupled" (Proposed) routing methods in real-time.</li>
             <li><strong>Arrival Rate Slider:</strong> Adjust the volume of voters from 10 to 150 per simulated hour to simulate sudden bursts of demand.</li>
-            <li><strong>Paper Routing Ratio (%):</strong> Adjust the percentage of voters routed to the BOD. This demonstrates the catastrophic bottleneck that occurs if poll workers attempt to "sell" the paper ballot to EBM-bound voters during a rush.</li>
+            <li><strong>Paper Routing Ratio (%):</strong> Adjust the percentage of voters routed to the BOD. This demonstrates the extreme pressure that builds on the single printer if poll workers attempt to "sell" the paper ballot to EBM-bound voters during a rush.</li>
             <li><strong>Manual Chronometer:</strong> A Start/Stop/Clear timer displaying whole "Simulated Minutes" allows users to benchmark exactly how long it takes queues to clear under different conditions.</li>
         </ul>
 
@@ -117,8 +117,18 @@
         <ul>
             <li><strong>Check-in:</strong> 1 simulated minute</li>
             <li><strong>BOD Print:</strong> 4 simulated minutes</li>
-            <li><strong>EBM Vote:</strong> Randomized between 5 to 20 simulated minutes per voter to account for real-world variance</li>
+            <li><strong>EBM Vote:</strong> Randomized between 5 to 20 simulated minutes per voter to account for real-world variance.</li>
         </ul>
+
+        <h2>🚀 How to Run & Usage Tips</h2>
+        <ol>
+            <li><strong>View the live model:</strong> Go to <code>https://wandroid.github.io/homepage/</code> to view the project landing page and launch the simulation.</li>
+            <li><strong>Run locally:</strong> Alternatively, you can download the repository and open the <code>index.html</code> file in any modern web browser to run it completely offline.</li>
+        </ol>
+
+        <p><strong>🔄 Resetting the Simulation:</strong> To start a completely new experiment, simply <strong>refresh your browser page</strong> while in the simulation. This will instantly wipe all current queues and reset the chronometer, allowing you to quickly set the sliders to new conditions and start fresh.</p>
+
+        <p><strong>📱 Mobile Viewing Tip:</strong> While you can access and run this simulation on a smartphone out in the field (using swipe to scroll and pinch-to-zoom), it is highly recommended to view it on a larger screen (desktop, laptop, or tablet) first. Seeing the entire layout on a big screen makes it much easier to understand the "big picture" of the floor's process flow before taking it on the go!</p>
 
         <div class="cta-container">
             <a href="PollQ.html" class="launch-btn">Launch Simulation</a>
