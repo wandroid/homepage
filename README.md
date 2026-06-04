@@ -35,10 +35,8 @@ The simulation runs on a scaled engine where 60 animation frames equal 1 simulat
 
 ## 🚀 How to Run & Usage Tips
 
-Since this is a self-contained HTML/JS file, no build tools or installations are required. 
-
-1. View the live model via the direct URL: `https://wandroid.github.io/homepage/PollQ.html`
-2. Alternatively, download and open the `PollQ.html` file in any modern web browser.
+1. **View the live model:** Go to `https://wandroid.github.io/homepage/` to view the project landing page and launch the simulation.
+2. **Run locally:** Alternatively, you can download the repository and open the `index.html` file in any modern web browser to run it completely offline.
 
 **🔄 Resetting the Simulation:** To start a completely new experiment, simply **refresh your browser page**. This will instantly wipe all current queues and reset the chronometer, allowing you to quickly set the sliders to new conditions and start fresh.
 
