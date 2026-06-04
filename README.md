@@ -40,4 +40,6 @@ Since this is a self-contained HTML/JS file, no build tools or installations are
 1. View the live model via the direct URL: `https://wandroid.github.io/homepage/PollQ.html`
 2. Alternatively, download and open the `PollQ.html` file in any modern web browser.
 
+**🔄 Resetting the Simulation:** To start a completely new experiment, simply **refresh your browser page**. This will instantly wipe all current queues and reset the chronometer, allowing you to quickly set the sliders to new conditions and start fresh.
+
 **📱 Mobile Viewing Tip:** While you can access and run this simulation on a smartphone out in the field (using swipe to scroll and pinch-to-zoom), it is highly recommended to view it on a larger screen (desktop, laptop, or tablet) first. Seeing the entire layout on a big screen makes it much easier to understand the "big picture" of the floor's process flow before taking it on the go!
